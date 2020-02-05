@@ -76,8 +76,7 @@
     tracking.backgroundColor = [UIColor clearColor].CGColor;
     [overlay addSublayer: tracking];
 
-    trackingColor = [[UIColor greenColor]
-                        retain];
+    trackingColor = [UIColor greenColor];
     tracking.borderColor = trackingColor.CGColor;
 
     fpsView = [UIView new];
@@ -95,7 +94,7 @@
                                   blue: 1
                                   alpha: 1];
     fpsLabel.font = [UIFont systemFontOfSize: 18];
-    fpsLabel.textAlignment = UITextAlignmentRight;
+    fpsLabel.textAlignment = NSTextAlignmentRight;
     [fpsView addSubview: fpsLabel];
 
     self.zoom = 1.25;
@@ -138,9 +137,7 @@
 
 - (id) init
 {
-    ZBarImageScanner *scanner =
-        [[ZBarImageScanner new]
-            autorelease];
+    ZBarImageScanner *scanner = [ZBarImageScanner new];
     self = [self initWithImageScanner: scanner];
     if(!self)
         return(nil);
@@ -159,9 +156,7 @@
     self = [super initWithCoder: decoder];
     if(!self)
         return(nil);
-    ZBarImageScanner *scanner =
-        [[ZBarImageScanner new]
-            autorelease];
+    ZBarImageScanner *scanner = [ZBarImageScanner new];
     [self _initWithImageScanner: scanner];
 
     [scanner setSymbology: 0
@@ -173,26 +168,16 @@
     return(self);
 }
 
-- (void) dealloc
-{
+- (void) dealloc {
     [preview removeFromSuperlayer];
-    [preview release];
     preview = nil;
-    [overlay release];
     overlay = nil;
-    [cropLayer release];
     cropLayer = nil;
-    [tracking release];
     tracking = nil;
-    [trackingColor release];
     trackingColor = nil;
-    [fpsLabel release];
     fpsLabel = nil;
-    [fpsView release];
     fpsView = nil;
-    [pinch release];
     pinch = nil;
-    [super dealloc];
 }
 
 - (void) resetTracking
@@ -332,9 +317,9 @@ static inline CGFloat rotationForInterfaceOrientation (int orient)
                                  effectiveCrop.origin.y * imageSize.height,
                                  effectiveCrop.size.width * imageSize.width,
                                  effectiveCrop.size.height * imageSize.height);
-    zlog(@"layoutSubviews: bounds=%@ orient=%d image=%@ crop=%@ zoom=%g\n"
+    zlog(@"layoutSubviews: bounds=%@ orient=%ld image=%@ crop=%@ zoom=%g\n"
          @"=> preview=%@ crop=(z%@ p%@ %@ i%@) scale=%g %c %g = 1/%g",
-         NSStringFromCGSize(bounds.size), interfaceOrientation,
+         NSStringFromCGSize(bounds.size), (long)interfaceOrientation,
          NSStringFromCGSize(imageSize), NSStringFromCGRect(scanCrop), zoom,
          NSStringFromCGSize(psize), NSStringFromCGRect(zoomCrop),
          NSStringFromCGRect(previewCrop), NSStringFromCGRect(effectiveCrop),
@@ -364,7 +349,7 @@ static inline CGFloat rotationForInterfaceOrientation (int orient)
                                  duration: (NSTimeInterval) duration
 {
     if(interfaceOrientation != orient) {
-        zlog(@"orient=%d #%g", orient, duration);
+        zlog(@"orient=%ld #%g", (long)orient, duration);
         interfaceOrientation = orient;
         animationDuration = duration;
     }
@@ -400,8 +385,6 @@ static inline CGFloat rotationForInterfaceOrientation (int orient)
 {
     if(!color)
         return;
-    [color retain];
-    [trackingColor release];
     trackingColor = color;
     tracking.borderColor = color.CGColor;
 }

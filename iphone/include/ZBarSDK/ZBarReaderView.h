@@ -50,7 +50,7 @@
 @interface ZBarReaderView
     : UIView
 {
-    id<ZBarReaderViewDelegate> readerDelegate;
+    __unsafe_unretained id<ZBarReaderViewDelegate> readerDelegate;
     ZBarCaptureReader *captureReader;
     CGRect scanCrop, effectiveCrop;
     CGAffineTransform previewTransform;

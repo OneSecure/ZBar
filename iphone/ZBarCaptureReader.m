@@ -39,15 +39,33 @@ enum {
     CAPTURE = 4,
 };
 
+@interface ZBarCaptureReader () {
+    AVCaptureVideoDataOutput *captureOutput;
+    ZBarImageScanner *scanner;
+    CGRect scanCrop;
+    CGSize size;
+    CGFloat framesPerSecond;
+    BOOL enableCache;
+    
+    dispatch_queue_t queue;
+    ZBarImage *image;
+    ZBarCVImage *result;
+    volatile uint32_t state;
+    int framecnt;
+    unsigned width, height;
+    uint64_t t_frame, t_fps, t_scan;
+    CGFloat dt_frame;
+}
+@end
+
 @implementation ZBarCaptureReader
 
-@synthesize captureOutput, captureDelegate, scanner, scanCrop, size,
+@synthesize captureOutput, scanner, scanCrop, size,
     framesPerSecond, enableCache;
 @dynamic enableReader;
 
 - (void) initResult
 {
-    [result release];
     result = [ZBarCVImage new];
     result.format = [ZBarImage fourcc: @"CV2P"];
 }
@@ -61,7 +79,7 @@ enum {
     t_fps = t_frame = timer_now();
     enableCache = YES;
 
-    scanner = [_scanner retain];
+    scanner = _scanner;
     scanCrop = CGRectMake(0, 0, 1, 1);
     image = [ZBarImage new];
     image.format = [ZBarImage fourcc: @"Y800"];
@@ -97,9 +115,7 @@ enum {
 
 - (id) init
 {
-    self = [self initWithImageScanner:
-               [[ZBarImageScanner new]
-                   autorelease]];
+    self = [self initWithImageScanner:[ZBarImageScanner new]];
     if(!self)
         return(nil);
 
@@ -112,26 +128,18 @@ enum {
     return(self);
 }
 
-- (void) dealloc
-{
-    captureDelegate = nil;
+- (void) dealloc {
+    _captureDelegate = nil;
 
     // queue continues to run after stopping (NB even after DidStopRunning!);
     // ensure released delegate is not called. (also NB that the queue
     // may not be null, even in this case...)
-    [captureOutput setSampleBufferDelegate: nil
-                   queue: queue];
-    [captureOutput release];
+    [captureOutput setSampleBufferDelegate:nil queue:queue];
     captureOutput = nil;
-    dispatch_release(queue);
 
-    [image release];
     image = nil;
-    [result release];
     result = nil;
-    [scanner release];
     scanner = nil;
-    [super dealloc];
 }
 
 - (BOOL) enableReader
@@ -173,10 +181,9 @@ enum {
     OSAtomicOr32(CAPTURE, &state);
 }
 
-- (void) setCaptureDelegate: (id<ZBarCaptureDelegate>) delegate
-{
+- (void) setCaptureDelegate:(id<ZBarCaptureDelegate>)delegate {
     @synchronized(scanner) {
-        captureDelegate = delegate;
+        _captureDelegate = delegate;
     }
 }
 
@@ -198,19 +205,14 @@ enum {
     [self cropUpdate];
 }
 
-- (void) didTrackSymbols: (ZBarSymbolSet*) syms
-{
-    [captureDelegate
-        captureReader: self
-        didTrackSymbols: syms];
+- (void) didTrackSymbols: (ZBarSymbolSet*) syms {
+    [_captureDelegate captureReader:self didTrackSymbols:syms];
 }
 
 - (void) didReadNewSymbolsFromImage: (ZBarImage*) img
 {
     timer_start;
-    [captureDelegate
-        captureReader: self
-        didReadNewSymbolsFromImage: img];
+    [_captureDelegate captureReader:self didReadNewSymbolsFromImage:img];
     OSAtomicAnd32Barrier(~PAUSED, &state);
     zlog(@"latency: delegate=%gs total=%gs",
          timer_elapsed(t_start, timer_now()),
@@ -232,11 +234,13 @@ enum {
     size = _size;
 }
 
-- (void) updateSize: (CFDictionaryRef) val
-{
+- (void) updateSize:(id)val {
+    CFDictionaryRef dict = (__bridge CFDictionaryRef)(val);
     CGSize _size;
-    if(CGSizeMakeWithDictionaryRepresentation(val, &_size))
+    if(CGSizeMakeWithDictionaryRepresentation(dict, &_size)) {
         [self setSize: _size];
+    }
+    CFRelease(dict);
 }
 
 - (void)  captureOutput: (AVCaptureOutput*) output
@@ -249,7 +253,7 @@ enum {
     if((_state & (PAUSED | RUNNING)) != RUNNING)
         return;
 
-    NSAutoreleasePool *pool = [NSAutoreleasePool new];
+    @autoreleasepool {
     image.sequence = framecnt++;
 
     uint64_t now = timer_now();
@@ -279,7 +283,7 @@ enum {
     }
 
     OSType format = CVPixelBufferGetPixelFormatType(buf);
-    int planes = CVPixelBufferGetPlaneCount(buf);
+    int planes = (int) CVPixelBufferGetPlaneCount(buf);
 
     if(format != kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange ||
        !planes) {
@@ -287,8 +291,8 @@ enum {
         goto error;
     }
 
-    int w = CVPixelBufferGetBytesPerRowOfPlane(buf, 0);
-    int h = CVPixelBufferGetHeightOfPlane(buf, 0);
+    int w = (int) CVPixelBufferGetBytesPerRowOfPlane(buf, 0);
+    int h = (int) CVPixelBufferGetHeightOfPlane(buf, 0);
     CVReturn rc =
         CVPixelBufferLockBaseAddress(buf, kCVPixelBufferLock_ReadOnly);
     if(!w || !h || rc) {
@@ -312,19 +316,17 @@ enum {
                 CFDictionaryRef sized =
                     CGSizeCreateDictionaryRepresentation(_size);
                 if(sized) {
-                    [self performSelectorOnMainThread: @selector(updateSize:)
-                          withObject: (id)sized
-                          waitUntilDone: NO];
-                    CFRelease(sized);
+                    [self performSelectorOnMainThread:@selector(updateSize:)
+                                           withObject:(__bridge id)(sized)
+                                        waitUntilDone:NO];
                 }
                 image.size = _size;
                 [self cropUpdate];
             }
 
-            ngood = [scanner scanImage: image];
+            ngood = (int) [scanner scanImage: image];
             syms = scanner.results;
-            doTrack = [captureDelegate respondsToSelector:
-                          @selector(captureReader:didTrackSymbols:)];
+            doTrack = [_captureDelegate respondsToSelector:@selector(captureReader:didTrackSymbols:)];
         }
         now = timer_now();
 
@@ -364,7 +366,8 @@ enum {
     CVPixelBufferUnlockBaseAddress(buf, kCVPixelBufferLock_ReadOnly);
 
  error:
-    [pool release];
+        ;
+    }
 }
 
 @end

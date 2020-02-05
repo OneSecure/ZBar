@@ -24,6 +24,9 @@
 #import <ZBarSDK/ZBarCameraSimulator.h>
 #import <ZBarSDK/ZBarReaderView.h>
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated"
+
 // hack around missing simulator support for AVCapture interfaces
 
 @implementation ZBarCameraSimulator
@@ -33,7 +36,6 @@
 - (id) initWithViewController: (UIViewController*) vc
 {
     if(!TARGET_IPHONE_SIMULATOR) {
-        [self release];
         return(nil);
     }
     self = [super init];
@@ -45,22 +47,15 @@
     return(self);
 }
 
-- (void) dealloc
-{
+- (void) dealloc {
     viewController = nil;
     readerView = nil;
-    [picker release];
     picker = nil;
-    [pickerPopover release];
     pickerPopover = nil;
-    [super dealloc];
 }
 
-- (void) setReaderView: (ZBarReaderView*) view
-{
-    ZBarReaderView *oldView = readerView;
-    readerView = [view retain];
-    [oldView release];
+- (void) setReaderView:(ZBarReaderView *)view {
+    readerView = view;
 
     UILongPressGestureRecognizer *gesture =
         [[UILongPressGestureRecognizer alloc]
@@ -68,7 +63,6 @@
             action: @selector(didLongPress:)];
     gesture.numberOfTouchesRequired = 2;
     [view addGestureRecognizer: gesture];
-    [gesture release];
 }
 
 - (void) didLongPress: (UILongPressGestureRecognizer*) gesture
@@ -93,8 +87,7 @@
                        animated: YES];
     }
     else
-        [viewController presentModalViewController: picker
-                        animated: YES];
+        [viewController presentViewController:picker animated:YES completion:nil];
 }
 
 - (void)  imagePickerController: (UIImagePickerController*) _picker
@@ -105,7 +98,7 @@
     if(UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad)
         [pickerPopover dismissPopoverAnimated: YES];
     else
-        [_picker dismissModalViewControllerAnimated: YES];
+        [_picker dismissViewControllerAnimated:YES completion:nil];
 
     [readerView performSelector: @selector(scanImage:)
                 withObject: image
@@ -114,7 +107,9 @@
 
 - (void) imagePickerControllerDidCancel: (UIImagePickerController*) _picker
 {
-    [_picker dismissModalViewControllerAnimated: YES];
+    [_picker dismissViewControllerAnimated:YES completion:nil];
 }
 
 @end
+
+#pragma clang diagnostic pop

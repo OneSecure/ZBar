@@ -44,7 +44,7 @@
     : UIViewController
 {
     ZBarImageScanner *scanner;
-    id <ZBarReaderDelegate> readerDelegate;
+    __unsafe_unretained id <ZBarReaderDelegate> readerDelegate;
     ZBarReaderView *readerView;
     UIView *cameraOverlayView;
     CGAffineTransform cameraViewTransform;
@@ -53,7 +53,7 @@
     UIImagePickerControllerCameraDevice cameraDevice;
     UIImagePickerControllerCameraFlashMode cameraFlashMode;
     UIImagePickerControllerQualityType videoQuality;
-    BOOL showsZBarControls, tracksSymbols, enableCache;
+    BOOL tracksSymbols, enableCache;
 
     ZBarHelpController *helpController;
     UIView *controls, *shutter;
@@ -69,6 +69,8 @@
 
 // whether to use alternate control set
 @property (nonatomic) BOOL showsZBarControls;
+
+@property(nonatomic, assign) BOOL showHelpInfo;
 
 // whether to show the green tracking box.  note that, even when
 // enabled, the box will only be visible when scanning EAN and I2/5.

@@ -43,7 +43,7 @@ int zbar_parse_config (const char *cfgstr,
 
     dot = strchr(cfgstr, '.');
     if(dot) {
-        int len = dot - cfgstr;
+        int len = (int) (dot - cfgstr);
         if(!len || (len == 1 && !strncmp(cfgstr, "*", len)))
             *sym = 0;
         else if(len < 2)
@@ -105,10 +105,10 @@ int zbar_parse_config (const char *cfgstr,
     else
         *sym = 0;
 
-    len = strlen(cfgstr);
+    len = (int) strlen(cfgstr);
     eq = strchr(cfgstr, '=');
     if(eq)
-        len = eq - cfgstr;
+        len = (int) (eq - cfgstr);
     else
         *val = 1;  /* handle this here so we can override later */
     negate = 0;
@@ -156,7 +156,7 @@ int zbar_parse_config (const char *cfgstr,
 #ifdef HAVE_ERRNO_H
         errno = 0;
 #endif
-        *val = strtol(eq + 1, NULL, 0);
+        *val = (int) strtol(eq + 1, NULL, 0);
 #ifdef HAVE_ERRNO_H
         if(errno)
             return(1);

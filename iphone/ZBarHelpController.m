@@ -26,9 +26,14 @@
 #define MODULE ZBarHelpController
 #import "debug.h"
 
-@implementation ZBarHelpController
-
-@synthesize delegate;
+@implementation ZBarHelpController {
+    NSString *reason;
+    UIWebView *webView;
+    UIToolbar *toolbar;
+    UIBarButtonItem *doneBtn, *backBtn, *space;
+    NSURL *linkURL;
+    NSUInteger orientations;
+}
 
 - (id) initWithReason: (NSString*) _reason
 {
@@ -38,7 +43,7 @@
 
     if(!_reason)
         _reason = @"INFO";
-    reason = [_reason retain];
+    reason = _reason;
     return(self);
 }
 
@@ -47,28 +52,18 @@
     return([self initWithReason: nil]);
 }
 
-- (void) cleanup
-{
-    [toolbar release];
+- (void) cleanup {
     toolbar = nil;
-    [webView release];
     webView = nil;
-    [doneBtn release];
     doneBtn = nil;
-    [backBtn release];
     backBtn = nil;
-    [space release];
     space = nil;
 }
 
-- (void) dealloc
-{
+- (void) dealloc {
     [self cleanup];
-    [reason release];
     reason = nil;
-    [linkURL release];
     linkURL = nil;
-    [super dealloc];
 }
 
 - (void) viewDidLoad
@@ -126,7 +121,7 @@
 
     [view addSubview: toolbar];
 
-    NSString *path = [[NSBundle mainBundle]
+    NSString *path = [[NSBundle bundleForClass:self.class]
                          pathForResource: @"zbar-help"
                          ofType: @"html"];
 
@@ -187,8 +182,12 @@
 - (BOOL) isInterfaceOrientationSupported: (UIInterfaceOrientation) orient
 {
     UIViewController *parent = self.parentViewController;
-    if(parent && !orientations)
+    if(parent && !orientations) {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated"
         return([parent shouldAutorotateToInterfaceOrientation: orient]);
+#pragma clang diagnostic pop
+    }
     return((orientations >> orient) & 1);
 }
 
@@ -204,10 +203,10 @@
 
 - (void) dismiss
 {
-    if([delegate respondsToSelector: @selector(helpControllerDidFinish:)])
-        [delegate helpControllerDidFinish: self];
+    if ([_delegate respondsToSelector: @selector(helpControllerDidFinish:)])
+        [_delegate helpControllerDidFinish: self];
     else
-        [self dismissModalViewControllerAnimated: YES];
+        [self dismissViewControllerAnimated:YES completion:nil];
 }
 
 - (void) webViewDidFinishLoad: (UIWebView*) view
@@ -234,6 +233,9 @@
     }
 }
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated"
+
 - (BOOL)             webView: (UIWebView*) view
   shouldStartLoadWithRequest: (NSURLRequest*) req
               navigationType: (UIWebViewNavigationType) nav
@@ -242,17 +244,15 @@
     if([url isFileURL])
         return(YES);
 
-    linkURL = [url retain];
+    linkURL = url;
     UIAlertView *alert =
         [[UIAlertView alloc]
             initWithTitle: @"Open External Link"
             message: @"Close this application and open link in Safari?"
-            delegate: nil
+            delegate: self
             cancelButtonTitle: @"Cancel"
             otherButtonTitles: @"OK", nil];
-    alert.delegate = self;
     [alert show];
-    [alert release];
     return(NO);
 }
 
@@ -263,5 +263,7 @@
         [[UIApplication sharedApplication]
             openURL: linkURL];
 }
+
+#pragma clang diagnostic pop
 
 @end

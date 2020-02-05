@@ -31,7 +31,7 @@ static const void*
 asyncProvider_getBytePointer (void *info)
 {
     // block until data is available
-    ZBarCVImage *image = info;
+    ZBarCVImage *image = (__bridge ZBarCVImage *)(info);
     assert(image);
     [image waitUntilConverted];
     void *buf = image.rgbBuffer;
@@ -58,9 +58,7 @@ static const CGDataProviderDirectCallbacks asyncProvider = {
         free(rgbBuffer);
         rgbBuffer = NULL;
     }
-    [conversion release];
     conversion = nil;
-    [super dealloc];
 }
 
 - (void) setPixelBuffer: (CVPixelBufferRef) newbuf
@@ -76,11 +74,10 @@ static const CGDataProviderDirectCallbacks asyncProvider = {
 - (void) waitUntilConverted
 {
     // operation will at least have been queued already
-    NSOperation *op = [conversion retain];
+    NSOperation *op = conversion;
     if(!op)
         return;
     [op waitUntilFinished];
-    [op release];
 }
 
 - (UIImage*) UIImageWithOrientation: (UIImageOrientation) orient
@@ -100,7 +97,6 @@ static const CGDataProviderDirectCallbacks asyncProvider = {
                          selector: @selector(convertCVtoRGB)
                          object: nil];
         [queue addOperation: conversion];
-        [conversion release];
     }
 
     // create UIImage before converted data is available
@@ -109,7 +105,7 @@ static const CGDataProviderDirectCallbacks asyncProvider = {
     int h = size.height;
 
     CGDataProviderRef datasrc =
-        CGDataProviderCreateDirect([self retain], 3 * w * h, &asyncProvider);
+        CGDataProviderCreateDirect((void * __nullable)CFBridgingRetain(self), 3 * w * h, &asyncProvider);
     CGColorSpaceRef cs = CGColorSpaceCreateDeviceRGB();
     CGImageRef cgimg =
         CGImageCreate(w, h, 8, 24, 3 * w, cs,
@@ -138,10 +134,10 @@ static const CGDataProviderDirectCallbacks asyncProvider = {
         return;
 
     CVPixelBufferLockBaseAddress(pixelBuffer, kCVPixelBufferLock_ReadOnly);
-    int w = CVPixelBufferGetWidth(pixelBuffer);
-    int h = CVPixelBufferGetHeight(pixelBuffer);
-    int dy = CVPixelBufferGetBytesPerRowOfPlane(pixelBuffer, 0);
-    int duv = CVPixelBufferGetBytesPerRowOfPlane(pixelBuffer, 1);
+    int w = (int) CVPixelBufferGetWidth(pixelBuffer);
+    int h = (int) CVPixelBufferGetHeight(pixelBuffer);
+    int dy = (int) CVPixelBufferGetBytesPerRowOfPlane(pixelBuffer, 0);
+    int duv = (int) CVPixelBufferGetBytesPerRowOfPlane(pixelBuffer, 1);
     uint8_t *py = CVPixelBufferGetBaseAddressOfPlane(pixelBuffer, 0);
     uint8_t *puv = CVPixelBufferGetBaseAddressOfPlane(pixelBuffer, 1);
     if(!py || !puv || dy < w || duv < w)

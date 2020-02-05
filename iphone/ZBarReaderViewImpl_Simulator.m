@@ -27,6 +27,8 @@
 #define MODULE ZBarReaderView
 #import "debug.h"
 
+#if TARGET_OS_SIMULATOR
+
 // hack around missing simulator support for AVCapture interfaces
 
 // protected APIs
@@ -55,7 +57,7 @@
 - (void) _initWithImageScanner: (ZBarImageScanner*) _scanner
 {
     [super _initWithImageScanner: _scanner];
-    scanner = [_scanner retain];
+    scanner = _scanner;
 
     [self initSubviews];
 }
@@ -67,7 +69,7 @@
     simLabel.textColor = [UIColor whiteColor];
     simLabel.font = [UIFont boldSystemFontOfSize: 20];
     simLabel.numberOfLines = 4;
-    simLabel.textAlignment = UITextAlignmentCenter;
+    simLabel.textAlignment = NSTextAlignmentCenter;
     simLabel.text = @"Camera Simulation\n\n"
         @"Tap and hold with two \"fingers\" to select image";
     simLabel.autoresizingMask =
@@ -84,15 +86,10 @@
     [super initSubviews];
 }
 
-- (void) dealloc
-{
-    [scanner release];
+- (void) dealloc {
     scanner = nil;
-    [simLabel release];
     simLabel = nil;
-    [previewImage release];
     previewImage = nil;
-    [super dealloc];
 }
 
 - (AVCaptureDevice*) device
@@ -143,11 +140,11 @@
           afterDelay: 0.5];
 }
 
-- (void) scanImage: (UIImage*) image
+- (void) scanImage: (UIImage*) image0
 {
     // strip EXIF info
-    CGImageRef cgimage = image.CGImage;
-    image = [[UIImage alloc]
+    CGImageRef cgimage = image0.CGImage;
+    UIImage *image = [[UIImage alloc]
                 initWithCGImage: cgimage
                 scale: 1.0
                 orientation: UIImageOrientationUp];
@@ -159,7 +156,7 @@
     [CATransaction setDisableActions: YES];
     previewImage.contentsGravity = kCAGravityResizeAspectFill;
     previewImage.transform = CATransform3DMakeRotation(M_PI_2, 0, 0, 1);
-    previewImage.contents = (id)cgimage;
+    previewImage.contents = (__bridge id) CFRetain(cgimage);
     [CATransaction commit];
 
     ZBarImage *zimg =
@@ -172,22 +169,16 @@
                            effectiveCrop.size.width * size.width,
                            effectiveCrop.size.height * size.height);
 
-    int nsyms = [scanner scanImage: zimg];
+    int nsyms = (int) [scanner scanImage: zimg];
     zlog(@"scan image: %@ crop=%@ nsyms=%d",
          NSStringFromCGSize(size), NSStringFromCGRect(zimg.crop), nsyms);
-    [zimg release];
 
     if(nsyms > 0) {
-        scanImage = [image retain];
+        scanImage = image;
         ZBarSymbolSet *syms = scanner.results;
-        [self performSelector: @selector(didReadSymbols:)
-              withObject: syms
-              afterDelay: .4];
-        [self performSelector: @selector(didTrackSymbols:)
-              withObject: syms
-              afterDelay: .001];
+        [self performSelector:@selector(didReadSymbols:) withObject:syms afterDelay:.4];
+        [self performSelector:@selector(didTrackSymbols:) withObject:syms afterDelay:.001];
     }
-    [image release];
 }
 
 - (void) didReadSymbols: (ZBarSymbolSet*) syms
@@ -196,7 +187,6 @@
         readerView: self
         didReadSymbols: syms
         fromImage: scanImage];
-    [scanImage release];
     scanImage = nil;
 }
 
@@ -217,3 +207,5 @@
 }
 
 @end
+
+#endif

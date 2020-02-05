@@ -131,7 +131,7 @@ CGImageRef UIGetScreenImage(void);
                     action: nil];
     space[2].width = r.size.width / 4 - 16;
 
-    infoBtn = [[UIButton buttonWithType: UIButtonTypeInfoLight] retain];
+    infoBtn = [UIButton buttonWithType: UIButtonTypeInfoLight];
     r.origin.x = r.size.width - 54;
     r.size.width = 54;
     infoBtn.frame = r;
@@ -150,25 +150,16 @@ CGImageRef UIGetScreenImage(void);
 
 - (void) cleanup
 {
-    [overlay release];
     overlay = nil;
-    [boxView release];
     boxView = nil;
-    [boxLayer release];
     boxLayer = nil;
-    [toolbar release];
     toolbar = nil;
-    [cancelBtn release];
     cancelBtn = nil;
-    [scanBtn release];
     scanBtn = nil;
     for(int i = 0; i < 3; i++) {
-        [space[i] release];
         space[i] = nil;
     }
-    [infoBtn release];
     infoBtn = nil;
-    [help release];
     help = nil;
 }
 
@@ -178,12 +169,9 @@ CGImageRef UIGetScreenImage(void);
     [super viewDidUnload];
 }
 
-- (void) dealloc
-{
+- (void) dealloc {
     [self cleanup];
-    [scanner release];
     scanner = nil;
-    [super dealloc];
 }
 
 - (void) scan
@@ -248,6 +236,7 @@ CGImageRef UIGetScreenImage(void);
             scanner.enableCache = enableCache;
 
             SEL meth = nil;
+#if USE_PRIVATE_APIS
             if(cameraMode == ZBarReaderControllerCameraModeSampling) {
                 // ensure crop rect does not include controls
                 if(scanCrop.origin.x + scanCrop.size.width > .8875)
@@ -256,6 +245,7 @@ CGImageRef UIGetScreenImage(void);
                 meth = @selector(scanScreen);
             }
             else
+#endif
                 meth = @selector(takePicture);
 
             [self performSelector: meth
@@ -350,8 +340,8 @@ CGImageRef UIGetScreenImage(void);
         dt_frame = timer_elapsed(t_frame, now);
     t_frame = now;
 
-    int w = CGImageGetWidth(image);
-    int h = CGImageGetHeight(image);
+    int w = (int) CGImageGetWidth(image);
+    int h = (int) CGImageGetHeight(image);
     CGRect crop;
     if(w >= h)
         crop = CGRectMake(scanCrop.origin.x * w, scanCrop.origin.y * h,
@@ -401,8 +391,7 @@ CGImageRef UIGetScreenImage(void);
                           initWithCGImage: image
                           crop: crop
                           size: size];
-    int nsyms = [scanner scanImage: zimg];
-    [zimg release];
+    int nsyms = (int) [scanner scanImage: zimg];
 
     return(nsyms);
 }
@@ -542,12 +531,10 @@ CGImageRef UIGetScreenImage(void);
 - (void) scanSequence: (UIImage*) image
 {
     if(!sampling) {
-        [image release];
         return;
     }
 
-    int nsyms = [self scanImage: image.CGImage
-                      withScaling: 0];
+    int nsyms = (int) [self scanImage: image.CGImage withScaling: 0];
 
     ZBarSymbol *sym = nil;
     if(nsyms)
@@ -565,7 +552,6 @@ CGImageRef UIGetScreenImage(void);
                         ZBarReaderControllerResults,
                     nil]];
     CGSize size = image.size;
-    [image release];
 
     // reschedule
     [self performSelector: @selector(takePicture)
@@ -581,22 +567,23 @@ CGImageRef UIGetScreenImage(void);
 {
     if(help) {
         [help.view removeFromSuperview];
-        [help release];
     }
     help = [[ZBarHelpController alloc]
                initWithReason: reason];
     help.delegate = (id<ZBarHelpDelegate>)self;
 
-    if(self.sourceType != UIImagePickerControllerSourceTypeCamera) {
-        [self presentModalViewController: help
-              animated: YES];
+    if (self.sourceType != UIImagePickerControllerSourceTypeCamera) {
+        [self presentViewController:help animated:YES completion:nil];
         return;
     }
 
     // show help as overlay view to workaround controller bugs
     sampling = NO;
     scanner.enableCache = NO;
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated"
     help.wantsFullScreenLayout = YES;
+#pragma clang diagnostic pop
     help.view.alpha = 0;
 
     UIView *activeOverlay = [self cameraOverlayView];
@@ -625,7 +612,7 @@ CGImageRef UIGetScreenImage(void);
        cameraMode == ZBarReaderControllerCameraModeSequence) {
         if(sampling)
             [self performSelector: @selector(scanSequence:)
-                  withObject: [img retain]
+                  withObject: img
                   afterDelay: 0.001];
         return;
     }
@@ -633,7 +620,6 @@ CGImageRef UIGetScreenImage(void);
         results = [self scanImage: img.CGImage];
     else {
         results = [NSArray arrayWithObject: symbol];
-        [symbol release];
         symbol = nil;
     }
 
@@ -650,8 +636,7 @@ CGImageRef UIGetScreenImage(void);
             [readerDelegate imagePickerController: self
                             didFinishPickingMediaWithInfo: newinfo];
         else
-            [self dismissModalViewControllerAnimated: YES];
-        [newinfo release];
+            [self dismissViewControllerAnimated:YES completion:nil];
         return;
     }
 
@@ -667,7 +652,7 @@ CGImageRef UIGetScreenImage(void);
                         withRetry: retry];
     else if(!retry)
         // must dismiss stock controller
-        [self dismissModalViewControllerAnimated: YES];
+        [self dismissViewControllerAnimated:YES completion:nil];
 }
 
 - (void) imagePickerControllerDidCancel: (UIImagePickerController*) picker
@@ -676,7 +661,7 @@ CGImageRef UIGetScreenImage(void);
     if([readerDelegate respondsToSelector: cb])
         [readerDelegate imagePickerControllerDidCancel: self];
     else
-        [self dismissModalViewControllerAnimated: YES];
+        [self dismissViewControllerAnimated:YES completion:nil];
 }
 
 // ZBarHelpDelegate
@@ -691,22 +676,20 @@ CGImageRef UIGetScreenImage(void);
         [self initScanning];
     }
     else
-        [hlp dismissModalViewControllerAnimated: YES];
+        [hlp dismissViewControllerAnimated:YES completion:nil];
 }
 
 - (id <NSFastEnumeration>) scanImage: (CGImageRef) image
 {
     timer_start;
 
-    int nsyms = [self scanImage: image
-                      withScaling: 0];
+    int nsyms = (int) [self scanImage: image withScaling: 0];
 
     if(!nsyms &&
        CGImageGetWidth(image) >= 640 &&
        CGImageGetHeight(image) >= 640)
         // make one more attempt for close up, grainy images
-        nsyms = [self scanImage: image
-                      withScaling: .5];
+        nsyms = (int) [self scanImage: image withScaling: .5];
 
     NSMutableArray *syms = nil;
     if(nsyms) {
@@ -739,8 +722,8 @@ CGImageRef UIGetScreenImage(void);
         }
     }
 
-    zlog(@"read %d filtered symbols in %gs total\n",
-          (!syms) ? 0 : [syms count], timer_elapsed(t_start, timer_now()));
+    zlog(@"read %lul filtered symbols in %gs total\n",
+          (unsigned long)((!syms) ? 0 : [syms count]), timer_elapsed(t_start, timer_now()));
     return(syms);
 }
 

@@ -31,18 +31,13 @@ using namespace zbar;
 
 // Obj-C wrapper for ZBar result types
 
-@interface ZBarSymbolSet
-    : NSObject <NSFastEnumeration>
-{
-    const zbar_symbol_set_t *set;
-    BOOL filterSymbols;
-}
+@interface ZBarSymbolSet : NSObject <NSFastEnumeration>
 
 @property (readonly, nonatomic) int count;
 @property (readonly, nonatomic) const zbar_symbol_set_t *zbarSymbolSet;
 @property (nonatomic) BOOL filterSymbols;
 
-- (id) initWithSymbolSet: (const zbar_symbol_set_t*) set;
+- (instancetype) initWithSymbolSet: (const zbar_symbol_set_t*) set;
 
 @end
 

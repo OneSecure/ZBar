@@ -27,7 +27,7 @@
 
 static void image_cleanup(zbar_image_t *zimg)
 {
-    ZBarImage *image = zbar_image_get_userdata(zimg);
+    ZBarImage *image = (__bridge ZBarImage *)(zbar_image_get_userdata(zimg));
     [image cleanup];
 }
 
@@ -44,13 +44,12 @@ static void image_cleanup(zbar_image_t *zimg)
 - (id) initWithImage: (zbar_image_t*) image
 {
     if(!image) {
-        [self release];
         return(nil);
     }
     if(self = [super init]) {
         zimg = image;
         zbar_image_ref(image, 1);
-        zbar_image_set_userdata(zimg, self);
+        zbar_image_set_userdata(zimg, (__bridge void *)(self));
     }
     return(self);
 }
@@ -63,13 +62,11 @@ static void image_cleanup(zbar_image_t *zimg)
     return(self);
 }
 
-- (void) dealloc
-{
+- (void) dealloc {
     if(zimg) {
         zbar_image_ref(zimg, -1);
         zimg = NULL;
     }
-    [super dealloc];
 }
 
 - (id) initWithCGImage: (CGImageRef) image
@@ -86,7 +83,6 @@ static void image_cleanup(zbar_image_t *zimg)
     unsigned long datalen = w * h;
     uint8_t *raw = malloc(datalen);
     if(!raw) {
-        [self release];
         return(nil);
     }
 
@@ -204,11 +200,8 @@ static void image_cleanup(zbar_image_t *zimg)
                         crop.size.width + .5, crop.size.height + .5);
 }
 
-- (ZBarSymbolSet*) symbols
-{
-    return([[[ZBarSymbolSet alloc]
-                initWithSymbolSet: zbar_image_get_symbols(zimg)]
-               autorelease]);
+- (ZBarSymbolSet*) symbols {
+    return [[ZBarSymbolSet alloc] initWithSymbolSet:zbar_image_get_symbols(zimg)];
 }
 
 - (void) setSymbols: (ZBarSymbolSet*) symbols
@@ -267,7 +260,7 @@ static void image_cleanup(zbar_image_t *zimg)
     const void *data = zbar_image_get_data(zimg);
     size_t datalen = zbar_image_get_data_length(zimg);
     CGDataProviderRef datasrc =
-        CGDataProviderCreateWithData(self, data, datalen, (void*)CFRelease);
+        CGDataProviderCreateWithData((__bridge void * _Nullable)(self), data, datalen, (void*)CFRelease);
     CGColorSpaceRef cs = CGColorSpaceCreateDeviceRGB();
     CGImageRef cgimg =
         CGImageCreate(w, h, bpc, bpp, ((bpp + 7) >> 3) * w, cs,

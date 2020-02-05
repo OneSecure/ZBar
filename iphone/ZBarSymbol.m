@@ -42,13 +42,11 @@
     return(self);
 }
 
-- (void) dealloc
-{
+- (void) dealloc {
     if(symbol) {
         zbar_symbol_ref(symbol, -1);
         symbol = NULL;
     }
-    [super dealloc];
 }
 
 - (zbar_symbol_type_t) type
@@ -96,19 +94,15 @@
     return(symbol);
 }
 
-- (ZBarSymbolSet*) components
-{
-    return([[[ZBarSymbolSet alloc]
-                initWithSymbolSet: zbar_symbol_get_components(symbol)]
-               autorelease]);
+- (ZBarSymbolSet*) components {
+    return [[ZBarSymbolSet alloc] initWithSymbolSet: zbar_symbol_get_components(symbol)];
 }
 
-- (CGRect) bounds
-{
+- (CGRect) bounds {
     int n = zbar_symbol_get_loc_size(symbol);
-    if(!n)
+    if(!n) {
         return(CGRectNull);
-
+    }
     int xmin = INT_MAX, xmax = INT_MIN;
     int ymin = INT_MAX, ymax = INT_MIN;
 
@@ -126,71 +120,72 @@
 @end
 
 
-@implementation ZBarSymbolSet
+@implementation ZBarSymbolSet {
+    const zbar_symbol_set_t *_set;
+    BOOL filterSymbols;
+    ZBarSymbol *_symbolHolder;
+}
 
 @dynamic count, zbarSymbolSet;
 @synthesize filterSymbols;
 
-- (id) initWithSymbolSet: (const zbar_symbol_set_t*) s
-{
+- (instancetype) initWithSymbolSet:(const zbar_symbol_set_t *)s {
     if(!s) {
-        [self release];
         return(nil);
     }
     if(self = [super init]) {
-        set = s;
+        _set = s;
         zbar_symbol_set_ref(s, 1);
         filterSymbols = YES;
     }
     return(self);
 }
 
-- (void) dealloc
-{
-    if(set) {
-        zbar_symbol_set_ref(set, -1);
-        set = NULL;
+- (void) dealloc {
+    if (_set) {
+        zbar_symbol_set_ref(_set, -1);
+        _set = NULL;
     }
-    [super dealloc];
 }
 
-- (int) count
-{
-    if(filterSymbols)
-        return(zbar_symbol_set_get_size(set));
-
+- (int) count {
+    if (filterSymbols) {
+        return(zbar_symbol_set_get_size(_set));
+    }
     int n = 0;
-    const zbar_symbol_t *sym = zbar_symbol_set_first_unfiltered(set);
-    for(; sym; sym = zbar_symbol_next(sym))
+    const zbar_symbol_t *sym = zbar_symbol_set_first_unfiltered(_set);
+    for(; sym; sym = zbar_symbol_next(sym)) {
         n++;
+    }
     return(n);
 }
 
-- (const zbar_symbol_set_t*) zbarSymbolSet
-{
-    return(set);
+- (const zbar_symbol_set_t*) zbarSymbolSet {
+    return(_set);
 }
 
-- (NSUInteger) countByEnumeratingWithState: (NSFastEnumerationState*) state
-                                   objects: (id*) stackbuf
-                                     count: (NSUInteger) len
+- (NSUInteger) countByEnumeratingWithState:(NSFastEnumerationState *)state
+                                   objects:(id __unsafe_unretained _Nullable [_Nonnull])stackbuf
+                                     count:(NSUInteger)len
 {
     const zbar_symbol_t *sym = (void*)state->state; // FIXME
-    if(sym)
+    if (sym) {
         sym = zbar_symbol_next(sym);
-    else if(set && filterSymbols)
-        sym = zbar_symbol_set_first_symbol(set);
-    else if(set)
-        sym = zbar_symbol_set_first_unfiltered(set);
-
-    if(sym)
-        *stackbuf = [[[ZBarSymbol alloc]
-                         initWithSymbol: sym]
-                        autorelease];
-
+    } else if (_set && filterSymbols) {
+        sym = zbar_symbol_set_first_symbol(_set);
+    } else if (_set) {
+        sym = zbar_symbol_set_first_unfiltered(_set);
+    }
+    _symbolHolder = nil;
+    if(sym) {
+        _symbolHolder = [[ZBarSymbol alloc] initWithSymbol:sym];
+    }
     state->state = (unsigned long)sym; // FIXME
     state->itemsPtr = stackbuf;
-    state->mutationsPtr = (void*)self;
+    state->mutationsPtr = (__bridge void*)self;
+    
+    stackbuf[0] = _symbolHolder;
+    
     return((sym) ? 1 : 0);
 }
 

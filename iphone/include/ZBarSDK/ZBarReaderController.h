@@ -74,7 +74,7 @@ typedef enum {
     UIBarButtonItem *cancelBtn, *scanBtn, *space[3];
     UIButton *infoBtn;
 
-    id <ZBarReaderDelegate> readerDelegate;
+    __unsafe_unretained id <ZBarReaderDelegate> readerDelegate;
     BOOL showsZBarControls, showsHelpOnFail, takesPicture, enableCache;
     ZBarReaderControllerCameraMode cameraMode;
     CGRect scanCrop;

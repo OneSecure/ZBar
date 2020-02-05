@@ -32,9 +32,13 @@
       UIPopoverControllerDelegate >
 {
     UIViewController *viewController;
-    ZBarReaderView *readerView;
+    __unsafe_unretained ZBarReaderView *readerView;
     UIImagePickerController *picker;
+
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated"
     UIPopoverController *pickerPopover;
+#pragma clang diagnostic pop
 }
 
 - (id) initWithViewController: (UIViewController*) viewController;

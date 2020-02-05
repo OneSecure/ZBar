@@ -147,7 +147,7 @@ databar_postprocess_exp (zbar_decoder_t *dcode,
     unsigned n;
     unsigned char *buf;
     unsigned long d = *(data++);
-    int len = d / 211 + 4, buflen;
+    int len = (int) (d / 211 + 4), buflen;
 
     /* grok encodation method */
     d = *(data++);
@@ -420,7 +420,7 @@ databar_postprocess_exp (zbar_decoder_t *dcode,
         /* FIXME check pad? */
     }
 
-    i = buf - dcode->buf;
+    i = (int) (buf - dcode->buf);
     zassert(i < dcode->buf_alloc, -1, "i=%02x %s\n", i,
             _zbar_decoder_buf_dump(dcode->buf, i));
 
@@ -455,13 +455,13 @@ databar_postprocess (zbar_decoder_t *dcode,
 
     dbprintf(2, "\n    d={%d,%d,%d,%d}", d[0], d[1], d[2], d[3]);
     unsigned long r = d[0] * 1597 + d[1];
-    d[1] = r / 10000;
+    d[1] = (unsigned int) (r / 10000);
     r %= 10000;
     r = r * 2841 + d[2];
-    d[2] = r / 10000;
+    d[2] = (unsigned int) (r / 10000);
     r %= 10000;
     r = r * 1597 + d[3];
-    d[3] = r / 10000;
+    d[3] = (unsigned int) (r / 10000);
     dbprintf(2, " r=%ld", r);
 
     for(i = 4; --i >= 0; ) {
@@ -476,10 +476,10 @@ databar_postprocess (zbar_decoder_t *dcode,
 
     dbprintf(2, " d={%d,%d,%d}", d[1], d[2], d[3]);
     r = d[1] * 2841 + d[2];
-    d[2] = r / 10000;
+    d[2] = (unsigned int) (r / 10000);
     r %= 10000;
     r = r * 1597 + d[3];
-    d[3] = r / 10000;
+    d[3] = (unsigned int) (r / 10000);
     dbprintf(2, " r=%ld", r);
 
     for(i = 4; --i >= 0; ) {
@@ -511,10 +511,10 @@ databar_postprocess (zbar_decoder_t *dcode,
         if(chk)
             chk = 10 - chk;
         buf[13] = chk + '0';
-        dcode->buflen = buf - dcode->buf + 14;
+        dcode->buflen = (unsigned int) (buf - dcode->buf + 14);
     }
     else
-        dcode->buflen = buf - dcode->buf + 13;
+        dcode->buflen = (unsigned int) (buf - dcode->buf + 13);
 
     dbprintf(2, "\n    %s", _zbar_decoder_buf_dump(dcode->buf, 16));
 }
@@ -709,7 +709,7 @@ match_segment_exp (zbar_decoder_t *dcode,
 {
     databar_decoder_t *db = &dcode->databar;
     int bestsegs[22], i = 0, segs[22], seq[22];
-    int ifixed = seg - db->segs, fixed = IDX(seg), maxcnt = 0;
+    int ifixed = (int) (seg - db->segs), fixed = IDX(seg), maxcnt = 0;
     int iseg[DATABAR_MAX_SEGMENTS];
     unsigned csegs = db->csegs, width = seg->width, maxage = 0x7fff;
 
@@ -1128,7 +1128,7 @@ alloc_segment (databar_decoder_t *db)
             db->segs = realloc(db->segs, csegs * sizeof(*db->segs));
             db->csegs = csegs;
             seg = db->segs + csegs;
-            while(--seg, --csegs >= i) {
+            while((void)(--seg), --csegs >= i) {
                 seg->finder = -1;
                 seg->exp = 0;
                 seg->color = 0;

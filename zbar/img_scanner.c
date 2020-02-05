@@ -308,7 +308,7 @@ static inline void cache_sym (zbar_image_scanner_t *iscn,
         }
 
         /* consistency check and hysteresis */
-        age = sym->time - entry->time;
+        age = (uint32_t) (sym->time - entry->time);
         entry->time = sym->time;
         near_thresh = (age < CACHE_PROXIMITY);
         far_thresh = (age >= CACHE_HYSTERESIS);

@@ -30,6 +30,8 @@
 #define MODULE ZBarReaderView
 #import "debug.h"
 
+#if !TARGET_OS_SIMULATOR
+
 // protected APIs
 @interface ZBarReaderView()
 - (void) _initWithImageScanner: (ZBarImageScanner*) _scanner;
@@ -103,9 +105,8 @@
 - (void) initSubviews
 {
     AVCaptureVideoPreviewLayer *videoPreview =
-        [[AVCaptureVideoPreviewLayer
-             layerWithSession: session]
-            retain];
+        [AVCaptureVideoPreviewLayer
+             layerWithSession: session];
     preview = videoPreview;
     CGRect bounds = self.bounds;
     bounds.origin = CGPointZero;
@@ -135,15 +136,10 @@
     }
     @catch(...) { }
     captureReader.captureDelegate = nil;
-    [captureReader release];
     captureReader = nil;
-    [device release];
     device = nil;
-    [input release];
     input = nil;
-    [session release];
     session = nil;
-    [super dealloc];
 }
 
 - (void) updateCrop
@@ -157,33 +153,28 @@
     return(captureReader.scanner);
 }
 
-- (void) setDevice: (AVCaptureDevice*) newdev
-{
+- (void) setDevice:(AVCaptureDevice*)newdev {
     id olddev = device;
     AVCaptureInput *oldinput = input;
-    assert(!olddev == !oldinput);
+    assert(!olddev == !oldinput); (void)olddev;
 
     NSError *error = nil;
-    device = [newdev retain];
-    if(device) {
+    device = newdev;
+    if (device) {
         assert([device hasMediaType: AVMediaTypeVideo]);
-        input = [[AVCaptureDeviceInput alloc]
-                    initWithDevice: newdev
-                    error: &error];
+        input = [[AVCaptureDeviceInput alloc] initWithDevice:newdev error:&error];
         assert(input);
-    }
-    else
+    } else {
         input = nil;
-
+    }
     [session beginConfiguration];
-    if(oldinput)
+    if (oldinput) {
         [session removeInput: oldinput];
-    if(input)
+    }
+    if (input) {
         [session addInput: input];
+    }
     [session commitConfiguration];
-
-    [olddev release];
-    [oldinput release];
 }
 
 - (BOOL) enableCache
@@ -368,13 +359,13 @@
     if(!readerDelegate)
         return;
 
-    UIImageOrientation orient = [UIDevice currentDevice].orientation;
-    if(!UIDeviceOrientationIsValidInterfaceOrientation(orient)) {
-        orient = interfaceOrientation;
+    UIImageOrientation orient = (UIImageOrientation) [UIDevice currentDevice].orientation;
+    if(!UIDeviceOrientationIsValidInterfaceOrientation((UIDeviceOrientation)orient)) {
+        orient = (UIImageOrientation) interfaceOrientation;
         if(orient == UIInterfaceOrientationLandscapeLeft)
-            orient = UIDeviceOrientationLandscapeLeft;
+            orient = (UIImageOrientation) UIDeviceOrientationLandscapeLeft;
         else if(orient == UIInterfaceOrientationLandscapeRight)
-            orient = UIDeviceOrientationLandscapeRight;
+            orient = (UIImageOrientation) UIDeviceOrientationLandscapeRight;
     }
     switch(orient)
     {
@@ -400,3 +391,5 @@
 }
 
 @end
+
+#endif

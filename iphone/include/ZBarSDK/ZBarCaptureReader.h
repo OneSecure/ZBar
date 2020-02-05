@@ -43,28 +43,7 @@
 
 @end
 
-@interface ZBarCaptureReader
-    : NSObject
-{
-#if !TARGET_IPHONE_SIMULATOR
-    AVCaptureVideoDataOutput *captureOutput;
-    id<ZBarCaptureDelegate> captureDelegate;
-    ZBarImageScanner *scanner;
-    CGRect scanCrop;
-    CGSize size;
-    CGFloat framesPerSecond;
-    BOOL enableCache;
-
-    dispatch_queue_t queue;
-    ZBarImage *image;
-    ZBarCVImage *result;
-    volatile uint32_t state;
-    int framecnt;
-    unsigned width, height;
-    uint64_t t_frame, t_fps, t_scan;
-    CGFloat dt_frame;
-#endif
-}
+@interface ZBarCaptureReader : NSObject
 
 // supply a pre-configured image scanner
 - (id) initWithImageScanner: (ZBarImageScanner*) imageScanner;

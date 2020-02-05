@@ -117,7 +117,7 @@ static inline int _zbar_timer_now ()
 {
     struct timeval now;
     gettimeofday(&now, NULL);
-    return(now.tv_sec * 1000 + now.tv_usec / 1000);
+    return (int) (now.tv_sec * 1000 + now.tv_usec / 1000);
 }
 
 static inline zbar_timer_t *_zbar_timer_init (zbar_timer_t *timer,
@@ -140,7 +140,7 @@ static inline int _zbar_timer_check (zbar_timer_t *timer)
         return(-1);
 
     gettimeofday(&now, NULL);
-    return((timer->tv_sec - now.tv_sec) * 1000 +
+    return (int) ((timer->tv_sec - now.tv_sec) * 1000 +
            (timer->tv_usec - now.tv_usec) / 1000);
 }
 

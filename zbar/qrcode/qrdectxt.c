@@ -167,7 +167,7 @@ int qr_code_data_list_extract_text(const qr_code_data_list *_qrlist,
     err=0;
     for(j = 0; j < sa_size && !err; j++, sym = &(*sym)->next) {
       *sym = _zbar_image_scanner_alloc_sym(iscn, ZBAR_QRCODE, 0);
-      (*sym)->datalen = sa_ntext;
+      (*sym)->datalen = (unsigned int) sa_ntext;
       if(sa[j]<0){
         /* generic placeholder for unfinished results */
         (*sym)->type = ZBAR_PARTIAL;
@@ -179,7 +179,7 @@ int qr_code_data_list_extract_text(const qr_code_data_list *_qrlist,
 
         /* mark break in data */
         sa_text[sa_ntext++]='\0';
-        (*sym)->datalen = sa_ntext;
+        (*sym)->datalen = (unsigned int) sa_ntext;
 
         /* advance to next symbol */
         sym = &(*sym)->next;
@@ -254,7 +254,12 @@ int qr_code_data_list_extract_text(const qr_code_data_list *_qrlist,
             Does such a thing occur?
             Is it allowed?
             It requires copying buffers around to handle correctly.*/
-          case QR_MODE_BYTE:
+          case QR_MODE_BYTE:{
+              in=(char *)entry->payload.data.buf;
+              inleft=entry->payload.data.len;
+              memcpy(sa_text+sa_ntext,in,inleft*sizeof(*sa_text));
+              sa_ntext+=inleft;
+            }break;
           case QR_MODE_KANJI:{
             in=(char *)entry->payload.data.buf;
             inleft=entry->payload.data.len;
@@ -288,7 +293,7 @@ int qr_code_data_list_extract_text(const qr_code_data_list *_qrlist,
               }
               /*If the text is 8-bit clean, prefer UTF-8 over SJIS, since
                  SJIS will corrupt the backslashes used for DoCoMo formats.*/
-              else if(text_is_ascii((unsigned char *)in,inleft)){
+              else if(text_is_ascii((unsigned char *)in, (int)inleft)){
                 enc_list_mtf(enc_list,utf8_cd);
               }
               /*Try our list of encodings.*/
@@ -305,7 +310,7 @@ int qr_code_data_list_extract_text(const qr_code_data_list *_qrlist,
                   So if we see any of those characters, move this
                    conversion to the end of the list.*/
                 if(ei<2&&enc_list[ei]==latin1_cd&&
-                 !text_is_latin1((unsigned char *)in,inleft)){
+                 !text_is_latin1((unsigned char *)in, (int)inleft)){
                   int ej;
                   for(ej=ei+1;ej<3;ej++)enc_list[ej-1]=enc_list[ej];
                   enc_list[2]=latin1_cd;
@@ -401,7 +406,7 @@ int qr_code_data_list_extract_text(const qr_code_data_list *_qrlist,
                       if(ymax <= u) ymax = u + 1;
                   }
               syms->data = sa_text + syms->datalen;
-              next = (syms->next) ? syms->next->datalen : sa_ntext;
+              next = (int) ((syms->next) ? syms->next->datalen : sa_ntext);
               assert(next > syms->datalen);
               syms->datalen = next - syms->datalen - 1;
           }
@@ -413,8 +418,8 @@ int qr_code_data_list_extract_text(const qr_code_data_list *_qrlist,
           }
       }
       sa_sym->data = sa_text;
-      sa_sym->data_alloc = sa_ntext;
-      sa_sym->datalen = sa_ntext - 1;
+      sa_sym->data_alloc = (unsigned int) sa_ntext;
+      sa_sym->datalen = (unsigned int) (sa_ntext - 1);
       sa_sym->modifiers = fnc1;
 
       _zbar_image_scanner_add_sym(iscn, sa_sym);

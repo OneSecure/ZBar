@@ -30,6 +30,9 @@
 #define MODULE ZBarReaderViewController
 #import "debug.h"
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated"
+
 static inline AVCaptureDevicePosition
 AVPositionForUICamera (UIImagePickerControllerCameraDevice camera)
 {
@@ -51,6 +54,8 @@ UICameraForAVPosition (AVCaptureDevicePosition position)
         return(UIImagePickerControllerCameraDeviceRear);
     case AVCaptureDevicePositionFront:
         return(UIImagePickerControllerCameraDeviceFront);
+    default:
+            break;
     }
     return(-1);
 }
@@ -114,7 +119,7 @@ AVSessionPresetForUIVideoQuality (UIImagePickerControllerQualityType quality)
 
 @implementation ZBarReaderViewController
 
-@synthesize scanner, readerDelegate, showsZBarControls,
+@synthesize scanner, readerDelegate,
     supportedOrientationsMask, tracksSymbols, enableCache, cameraOverlayView,
     cameraViewTransform, cameraDevice, cameraFlashMode, videoQuality,
     readerView, scanCrop;
@@ -154,9 +159,10 @@ AVSessionPresetForUIVideoQuality (UIImagePickerControllerQualityType quality)
 
 - (void) _init
 {
+    _showHelpInfo = YES;
     supportedOrientationsMask =
         ZBarOrientationMask(UIInterfaceOrientationPortrait);
-    showsZBarControls = tracksSymbols = enableCache = YES;
+    _showsZBarControls = tracksSymbols = enableCache = YES;
     scanCrop = CGRectMake(0, 0, 1, 1);
     cameraViewTransform = CGAffineTransformIdentity;
 
@@ -188,7 +194,6 @@ AVSessionPresetForUIVideoQuality (UIImagePickerControllerQualityType quality)
        !NSClassFromString(@"AVCaptureSession")) {
         // fallback to old interface
         zlog(@"Falling back to ZBarReaderController");
-        [self release];
         return((id)[ZBarReaderController new]);
     }
 
@@ -215,35 +220,27 @@ AVSessionPresetForUIVideoQuality (UIImagePickerControllerQualityType quality)
 {
     [cameraOverlayView removeFromSuperview];
     cameraSim.readerView = nil;
-    [cameraSim release];
     cameraSim = nil;
     readerView.readerDelegate = nil;
-    [readerView release];
+    [readerView removeFromSuperview];
     readerView = nil;
-    [controls release];
     controls = nil;
-    [shutter release];
     shutter = nil;
 }
 
-- (void) dealloc
-{
+- (void) dealloc {
     [self cleanup];
-    [cameraOverlayView release];
     cameraOverlayView = nil;
-    [scanner release];
     scanner = nil;
-    [super dealloc];
 }
 
 - (void) initControls
 {
-    if(!showsZBarControls && controls) {
+    if(!_showsZBarControls && controls) {
         [controls removeFromSuperview];
-        [controls release];
         controls = nil;
     }
-    if(!showsZBarControls)
+    if(!_showsZBarControls)
         return;
 
     UIView *view = self.view;
@@ -273,30 +270,41 @@ AVSessionPresetForUIVideoQuality (UIImagePickerControllerQualityType quality)
         UIViewAutoresizingFlexibleWidth |
         UIViewAutoresizingFlexibleHeight;
 
-    UIButton *info =
-        [UIButton buttonWithType: UIButtonTypeInfoLight];
-    [info addTarget: self
-          action: @selector(info)
-          forControlEvents: UIControlEventTouchUpInside];
+    if (_showHelpInfo) {
+        UIButton *info = [UIButton buttonWithType:UIButtonTypeInfoLight];
+        [info addTarget:self action:@selector(info) forControlEvents:UIControlEventTouchUpInside];
 
     toolbar.items =
         [NSArray arrayWithObjects:
-            [[[UIBarButtonItem alloc]
+            [[UIBarButtonItem alloc]
                  initWithBarButtonSystemItem: UIBarButtonSystemItemCancel
                  target: self
-                 action: @selector(cancel)]
-                autorelease],
-            [[[UIBarButtonItem alloc]
+                 action: @selector(cancel)],
+            [[UIBarButtonItem alloc]
                  initWithBarButtonSystemItem: UIBarButtonSystemItemFlexibleSpace
                  target: nil
-                 action: nil]
-                autorelease],
-            [[[UIBarButtonItem alloc]
-                 initWithCustomView: info]
-                autorelease],
+                 action: nil],
+            [[UIBarButtonItem alloc]
+                 initWithCustomView: info],
             nil];
+    } else {
+        toolbar.items =
+        [NSArray arrayWithObjects:
+         [[UIBarButtonItem alloc]
+           initWithBarButtonSystemItem: UIBarButtonSystemItemFlexibleSpace
+           target: nil
+           action: nil],
+         [[UIBarButtonItem alloc]
+           initWithBarButtonSystemItem: UIBarButtonSystemItemCancel
+           target: self
+           action: @selector(cancel)],
+         [[UIBarButtonItem alloc]
+           initWithBarButtonSystemItem: UIBarButtonSystemItemFlexibleSpace
+           target: nil
+           action: nil],
+         nil];
+    }
     [controls addSubview: toolbar];
-    [toolbar release];
 
     [view addSubview: controls];
 }
@@ -318,10 +326,8 @@ AVSessionPresetForUIVideoQuality (UIImagePickerControllerQualityType quality)
         zlog(@"unable to set session preset=%@", preset);
 }
 
-- (void) loadView
-{
-    self.view = [[UIView alloc]
-                    initWithFrame: CGRectMake(0, 0, 320, 480)];
+- (void) loadView {
+    self.view = [[UIView alloc] initWithFrame: CGRectMake(0, 0, 320, 480)];
 }
 
 - (void) viewDidLoad
@@ -341,12 +347,13 @@ AVSessionPresetForUIVideoQuality (UIImagePickerControllerQualityType quality)
         UIViewAutoresizingFlexibleWidth |
         UIViewAutoresizingFlexibleHeight;
 
-    if(showsZBarControls ||
-       self.parentViewController.modalViewController == self)
-    {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated"
+    if (_showsZBarControls || self.parentViewController.modalViewController == self) {
         autoresize |= UIViewAutoresizingFlexibleBottomMargin;
         r.size.height -= 54;
     }
+#pragma clang diagnostic pop
     readerView.frame = r;
     readerView.autoresizingMask = autoresize;
     AVCaptureDevice *device = AVDeviceForUICamera(cameraDevice);
@@ -395,8 +402,8 @@ AVSessionPresetForUIVideoQuality (UIImagePickerControllerQualityType quality)
 
 - (void) viewWillAppear: (BOOL) animated
 {
-    zlog(@"willAppear: anim=%d orient=%d",
-         animated, self.interfaceOrientation);
+    zlog(@"willAppear: anim=%d orient=%ld",
+         animated, (long)self.interfaceOrientation);
     [self initControls];
     [super viewWillAppear: animated];
 
@@ -457,7 +464,7 @@ AVSessionPresetForUIVideoQuality (UIImagePickerControllerQualityType quality)
 - (void) willRotateToInterfaceOrientation: (UIInterfaceOrientation) orient
                                  duration: (NSTimeInterval) duration
 {
-    zlog(@"willRotate: orient=%d #%g", orient, duration);
+    zlog(@"willRotate: orient=%ld #%g", (long)orient, duration);
     rotating = YES;
     if(readerView)
         [readerView willRotateToInterfaceOrientation: orient
@@ -467,7 +474,7 @@ AVSessionPresetForUIVideoQuality (UIImagePickerControllerQualityType quality)
 - (void) willAnimateRotationToInterfaceOrientation: (UIInterfaceOrientation) orient
                                           duration: (NSTimeInterval) duration
 {
-    zlog(@"willAnimateRotation: orient=%d #%g", orient, duration);
+    zlog(@"willAnimateRotation: orient=%ld #%g", (long)orient, duration);
     if(helpController)
         [helpController willAnimateRotationToInterfaceOrientation: orient
                         duration: duration];
@@ -477,7 +484,7 @@ AVSessionPresetForUIVideoQuality (UIImagePickerControllerQualityType quality)
 
 - (void) didRotateFromInterfaceOrientation: (UIInterfaceOrientation) orient
 {
-    zlog(@"didRotate(%d): orient=%d", rotating, orient);
+    zlog(@"didRotate(%d): orient=%ld", rotating, (long)orient);
     if(!rotating && readerView) {
         // work around UITabBarController bug: willRotate is not called
         // for non-portrait initial interface orientation
@@ -519,14 +526,11 @@ AVSessionPresetForUIVideoQuality (UIImagePickerControllerQualityType quality)
 
 - (void) setCameraOverlayView: (UIView*) newview
 {
-    UIView *oldview = cameraOverlayView;
-    [oldview removeFromSuperview];
+    [cameraOverlayView removeFromSuperview];
 
-    cameraOverlayView = [newview retain];
+    cameraOverlayView = newview;
     if([self isViewLoaded] && newview)
         [self.view addSubview: newview];
-
-    [oldview release];
 }
 
 - (void) setCameraViewTransform: (CGAffineTransform) xfrm
@@ -545,7 +549,7 @@ AVSessionPresetForUIVideoQuality (UIImagePickerControllerQualityType quality)
         [readerDelegate
             imagePickerControllerDidCancel: (UIImagePickerController*)self];
     else
-        [self dismissModalViewControllerAnimated: YES];
+        [self dismissViewControllerAnimated:YES completion:nil];
 }
 
 - (void) info
@@ -607,8 +611,8 @@ AVSessionPresetForUIVideoQuality (UIImagePickerControllerQualityType quality)
 - (void) setCameraCaptureMode: (UIImagePickerControllerCameraCaptureMode) mode
 {
     NSAssert2(mode == UIImagePickerControllerCameraCaptureModeVideo,
-              @"attempt to set unsupported value (%d)"
-              @" for %@ property", mode, @"cameraCaptureMode");
+              @"attempt to set unsupported value (%ld)"
+              @" for %@ property", (long)mode, @"cameraCaptureMode");
 }
 
 - (void) setVideoQuality: (UIImagePickerControllerQualityType) quality
@@ -639,7 +643,6 @@ AVSessionPresetForUIVideoQuality (UIImagePickerControllerQualityType quality)
 {
     if([tag isEqualToString: @"ZBarHelp"] && helpController) {
         [helpController.view removeFromSuperview];
-        [helpController release];
         helpController = nil;
     }
 }
@@ -665,10 +668,10 @@ AVSessionPresetForUIVideoQuality (UIImagePickerControllerQualityType quality)
     if(!shutter.hidden)
         [UIView animateWithDuration: .25
                 animations: ^{
-                    shutter.alpha = 0;
+                    self->shutter.alpha = 0;
                 }
                 completion: ^(BOOL finished) {
-                    shutter.hidden = YES;
+                    self->shutter.hidden = YES;
                 }];
 }
 
@@ -687,7 +690,7 @@ AVSessionPresetForUIVideoQuality (UIImagePickerControllerQualityType quality)
                   @" for %@ property", val, @#getter); \
     }
 
-DEPRECATED_PROPERTY(sourceType, setSourceType, UIImagePickerControllerSourceType, UIImagePickerControllerSourceTypeCamera, NO)
+DEPRECATED_PROPERTY(sourceType, setSourceType, UIImagePickerControllerSourceType, (int)UIImagePickerControllerSourceTypeCamera, NO)
 DEPRECATED_PROPERTY(allowsEditing, setAllowsEditing, BOOL, NO, NO)
 DEPRECATED_PROPERTY(allowsImageEditing, setAllowsImageEditing, BOOL, NO, NO)
 DEPRECATED_PROPERTY(showsCameraControls, setShowsCameraControls, BOOL, NO, NO)
@@ -697,3 +700,5 @@ DEPRECATED_PROPERTY(takesPicture, setTakesPicture, BOOL, NO, NO)
 DEPRECATED_PROPERTY(maxScanDimension, setMaxScanDimension, NSInteger, 640, YES)
 
 @end
+
+#pragma clang diagnostic pop
