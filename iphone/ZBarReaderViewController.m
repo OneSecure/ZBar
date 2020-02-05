@@ -685,12 +685,12 @@ AVSessionPresetForUIVideoQuality (UIImagePickerControllerQualityType quality)
     }                                                  \
     - (void) setter: (type) v                          \
     {                                                  \
-        NSAssert2(ignore || v == val,                  \
-                  @"attempt to set unsupported value (%d)" \
-                  @" for %@ property", val, @#getter); \
+        NSAssert2(ignore || v == (type) val,                  \
+                  @"attempt to set unsupported value (%ld)" \
+                  @" for %@ property", (long)val, @#getter); \
     }
 
-DEPRECATED_PROPERTY(sourceType, setSourceType, UIImagePickerControllerSourceType, (int)UIImagePickerControllerSourceTypeCamera, NO)
+DEPRECATED_PROPERTY(sourceType, setSourceType, UIImagePickerControllerSourceType, UIImagePickerControllerSourceTypeCamera, NO)
 DEPRECATED_PROPERTY(allowsEditing, setAllowsEditing, BOOL, NO, NO)
 DEPRECATED_PROPERTY(allowsImageEditing, setAllowsImageEditing, BOOL, NO, NO)
 DEPRECATED_PROPERTY(showsCameraControls, setShowsCameraControls, BOOL, NO, NO)

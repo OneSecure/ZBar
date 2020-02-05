@@ -291,7 +291,7 @@ static inline CGFloat rotationForInterfaceOrientation (int orient)
     preview.position = CGPointMake(bounds.size.width / 2,
                                    bounds.size.height / 2);
 
-    CGFloat angle = rotationForInterfaceOrientation(interfaceOrientation);
+    CGFloat angle = rotationForInterfaceOrientation((int)interfaceOrientation);
     CATransform3D xform =
         CATransform3DMakeAffineTransform(previewTransform);
     preview.transform = CATransform3DRotate(xform, angle, 0, 0, 1);
