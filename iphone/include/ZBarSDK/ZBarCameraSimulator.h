@@ -25,23 +25,9 @@
 
 // hack around missing simulator support for AVCapture interfaces
 
-@interface ZBarCameraSimulator
-    : NSObject
-    < UINavigationControllerDelegate,
-      UIImagePickerControllerDelegate,
-      UIPopoverControllerDelegate >
-{
-    UIViewController *viewController;
-    __unsafe_unretained ZBarReaderView *readerView;
-    UIImagePickerController *picker;
+@interface ZBarCameraSimulator : NSObject<UINavigationControllerDelegate, UIImagePickerControllerDelegate>
 
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdeprecated"
-    UIPopoverController *pickerPopover;
-#pragma clang diagnostic pop
-}
-
-- (id) initWithViewController: (UIViewController*) viewController;
+- (instancetype) initWithViewController: (UIViewController*) viewController;
 - (void) takePicture;
 
 @property (nonatomic, assign) ZBarReaderView *readerView;

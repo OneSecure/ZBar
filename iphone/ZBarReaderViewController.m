@@ -393,11 +393,13 @@ AVSessionPresetForUIVideoQuality (UIImagePickerControllerQualityType quality)
     }
 }
 
-- (void) viewDidUnload
-{
-    [cameraOverlayView removeFromSuperview];
-    [self cleanup];
-    [super viewDidUnload];
+- (UIApplication*) getApplication {
+    UIApplication *app = nil;
+    Class appClass = NSClassFromString(@"UIApplication");
+    if (appClass) {
+        app = [appClass performSelector:@selector(sharedApplication)];
+    }
+    return app;
 }
 
 - (void) viewWillAppear: (BOOL) animated
@@ -415,7 +417,7 @@ AVSessionPresetForUIVideoQuality (UIImagePickerControllerQualityType quality)
     shutter.alpha = 1;
     shutter.hidden = NO;
 
-    UIApplication *app = [UIApplication sharedApplication];
+    UIApplication *app = [self getApplication];
     BOOL willHideStatusBar =
         !didHideStatusBar && self.wantsFullScreenLayout && !app.statusBarHidden;
     if(willHideStatusBar)
@@ -424,15 +426,14 @@ AVSessionPresetForUIVideoQuality (UIImagePickerControllerQualityType quality)
     didHideStatusBar = didHideStatusBar || willHideStatusBar;
 }
 
-- (void) dismissModalViewControllerAnimated: (BOOL) animated
-{
+- (void) dismissViewControllerAnimated:(BOOL)animated completion:(void (^ _Nullable)(void))completion {
     if(didHideStatusBar) {
-        [[UIApplication sharedApplication]
+        [[self getApplication]
             setStatusBarHidden: NO
             withAnimation: UIStatusBarAnimationFade];
         didHideStatusBar = NO;
     }
-    [super dismissModalViewControllerAnimated: animated];
+    [super dismissViewControllerAnimated:animated completion:completion];
 }
 
 - (void) viewWillDisappear: (BOOL) animated
@@ -440,7 +441,7 @@ AVSessionPresetForUIVideoQuality (UIImagePickerControllerQualityType quality)
     readerView.captureReader.enableReader = NO;
 
     if(didHideStatusBar) {
-        [[UIApplication sharedApplication]
+        [[self getApplication]
             setStatusBarHidden: NO
             withAnimation: UIStatusBarAnimationFade];
         didHideStatusBar = NO;
@@ -455,6 +456,9 @@ AVSessionPresetForUIVideoQuality (UIImagePickerControllerQualityType quality)
     // so defer until the view transitions are complete
     [readerView stop];
 }
+
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-implementations"
 
 - (BOOL) shouldAutorotateToInterfaceOrientation: (UIInterfaceOrientation) orient
 {
@@ -494,6 +498,9 @@ AVSessionPresetForUIVideoQuality (UIImagePickerControllerQualityType quality)
     }
     rotating = NO;
 }
+
+#pragma clang diagnostic pop
+
 
 - (ZBarReaderView*) readerView
 {

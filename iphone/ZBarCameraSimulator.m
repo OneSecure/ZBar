@@ -29,11 +29,20 @@
 
 // hack around missing simulator support for AVCapture interfaces
 
-@implementation ZBarCameraSimulator
+@interface ZBarCameraSimulator () <UIPopoverControllerDelegate> {
+    UIPopoverController *pickerPopover;
+}
+@end
+
+@implementation ZBarCameraSimulator {
+    UIViewController *viewController;
+    __unsafe_unretained ZBarReaderView *readerView;
+    UIImagePickerController *picker;
+}
 
 @synthesize readerView;
 
-- (id) initWithViewController: (UIViewController*) vc
+- (instancetype) initWithViewController: (UIViewController*) vc
 {
     if(!TARGET_IPHONE_SIMULATOR) {
         return(nil);

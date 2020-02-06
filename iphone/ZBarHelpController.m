@@ -26,6 +26,9 @@
 #define MODULE ZBarHelpController
 #import "debug.h"
 
+@interface ZBarHelpController () <UIWebViewDelegate>
+@end
+
 @implementation ZBarHelpController {
     NSString *reason;
     UIWebView *webView;
@@ -138,12 +141,6 @@
         NSLog(@"ERROR: unable to load zbar-help.html from bundle");
 }
 
-- (void) viewDidUnload
-{
-    [self cleanup];
-    [super viewDidUnload];
-}
-
 - (void) viewWillAppear: (BOOL) animated
 {
     assert(webView);
@@ -159,6 +156,9 @@
     webView.delegate = nil;
     [super viewWillDisappear: animated];
 }
+
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-implementations"
 
 - (BOOL) shouldAutorotateToInterfaceOrientation: (UIInterfaceOrientation) orient
 {
@@ -178,6 +178,8 @@
          NSStringFromCGRect(webView.frame),
          NSStringFromCGRect(toolbar.frame));
 }
+
+#pragma clang diagnostic pop
 
 - (BOOL) isInterfaceOrientationSupported: (UIInterfaceOrientation) orient
 {
@@ -233,9 +235,6 @@
     }
 }
 
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdeprecated"
-
 - (BOOL)             webView: (UIWebView*) view
   shouldStartLoadWithRequest: (NSURLRequest*) req
               navigationType: (UIWebViewNavigationType) nav
@@ -245,25 +244,38 @@
         return(YES);
 
     linkURL = url;
-    UIAlertView *alert =
-        [[UIAlertView alloc]
-            initWithTitle: @"Open External Link"
-            message: @"Close this application and open link in Safari?"
-            delegate: self
-            cancelButtonTitle: @"Cancel"
-            otherButtonTitles: @"OK", nil];
-    [alert show];
+    
+    UIAlertController *alert =
+    [UIAlertController alertControllerWithTitle:@"Open External Link"
+                                        message:@"Close this application and open link in Safari?"
+                                 preferredStyle:UIAlertControllerStyleActionSheet];
+    UIAlertAction *ok =
+    [UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleDefault
+                           handler:^(UIAlertAction * _Nonnull action)
+     {
+        [self openURL:self->linkURL];
+    }];
+    [alert addAction:ok];
+    UIAlertAction *cancel = [UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:nil];
+    [alert addAction:cancel];
+    [self presentViewController:alert animated:YES completion:nil];
     return(NO);
 }
 
-- (void)     alertView: (UIAlertView*) view
-  clickedButtonAtIndex: (NSInteger) idx
-{
-    if(idx)
-        [[UIApplication sharedApplication]
-            openURL: linkURL];
+- (void) openURL:(NSURL*)url {
+#if 1
+    Class appClass = NSClassFromString(@"UIApplication");
+    if (appClass) {
+        UIApplication *app = [appClass performSelector:@selector(sharedApplication)];
+        if (app) {
+            IMP imp = [app methodForSelector:@selector(openURL:)];
+            void (*func)(id, SEL, id) = (void *)imp;
+            func(app, @selector(openURL:), url);
+        }
+    }
+#else
+    [[UIApplication sharedApplication] openURL:url];
+#endif
 }
-
-#pragma clang diagnostic pop
 
 @end

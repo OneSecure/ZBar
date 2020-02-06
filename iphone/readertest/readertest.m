@@ -805,7 +805,7 @@ static const CGFloat zoom_choices[] = {
                 UIAlertController *alert = [UIAlertController alertControllerWithTitle:@""
                                                                                message:@"Save Image"
                                                                         preferredStyle:UIAlertControllerStyleActionSheet];
-                UIAlertAction *save = [UIAlertAction actionWithTitle:@"Save Image" style:UIAlertActionStyleCancel handler:^(UIAlertAction * _Nonnull action) {
+                UIAlertAction *save = [UIAlertAction actionWithTitle:@"Save Image" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
                     UIImage *img = [UIImage imageWithData:UIImagePNGRepresentation(self->imageView.image)];
                     UIImageWriteToSavedPhotosAlbum(img, nil, NULL, NULL);
                 }];

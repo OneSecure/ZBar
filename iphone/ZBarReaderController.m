@@ -163,12 +163,6 @@ CGImageRef UIGetScreenImage(void);
     help = nil;
 }
 
-- (void) viewDidUnload
-{
-    [self cleanup];
-    [super viewDidUnload];
-}
-
 - (void) dealloc {
     [self cleanup];
     scanner = nil;
