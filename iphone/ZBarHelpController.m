@@ -22,16 +22,17 @@
 //------------------------------------------------------------------------
 
 #import <ZBarSDK/ZBarHelpController.h>
+#import <WebKit/WebKit.h>
 
 #define MODULE ZBarHelpController
 #import "debug.h"
 
-@interface ZBarHelpController () <UIWebViewDelegate>
+@interface ZBarHelpController () <WKNavigationDelegate>
 @end
 
 @implementation ZBarHelpController {
     NSString *reason;
-    UIWebView *webView;
+    WKWebView *webView;
     UIToolbar *toolbar;
     UIBarButtonItem *doneBtn, *backBtn, *space;
     NSURL *linkURL;
@@ -82,11 +83,11 @@
     view.autoresizingMask = (UIViewAutoresizingFlexibleWidth |
                              UIViewAutoresizingFlexibleHeight);
 
-    webView = [[UIWebView alloc]
+    webView = [[WKWebView alloc]
                   initWithFrame: CGRectMake(0, 0,
                                             bounds.size.width,
                                             bounds.size.height - 44)];
-    webView.delegate = self;
+    webView.navigationDelegate = self;
     webView.backgroundColor = [UIColor colorWithWhite: .125f
                                        alpha: 1];
     webView.autoresizingMask = (UIViewAutoresizingFlexibleWidth |
@@ -146,14 +147,14 @@
     assert(webView);
     if(webView.loading)
         webView.hidden = YES;
-    webView.delegate = self;
+    webView.navigationDelegate = self;
     [super viewWillAppear: animated];
 }
 
 - (void) viewWillDisappear: (BOOL) animated
 {
     [webView stopLoading];
-    webView.delegate = nil;
+    webView.navigationDelegate = nil;
     [super viewWillDisappear: animated];
 }
 
@@ -211,14 +212,14 @@
         [self dismissViewControllerAnimated:YES completion:nil];
 }
 
-- (void) webViewDidFinishLoad: (UIWebView*) view
+#pragma mark - WKNavigationDelegate
+
+- (void) webView:(WKWebView *)view didFinishNavigation:(null_unspecified WKNavigation *)navigation
 {
     if(view.hidden) {
-        [view stringByEvaluatingJavaScriptFromString:
-            [NSString stringWithFormat:
-                @"onZBarHelp({reason:\"%@\"});", reason]];
-        [UIView beginAnimations: @"ZBarHelp"
-                context: nil];
+        NSString *script = [NSString stringWithFormat:@"onZBarHelp({reason:\"%@\"});", reason];
+        [view evaluateJavaScript:script completionHandler:nil];
+        [UIView beginAnimations: @"ZBarHelp" context: nil];
         view.hidden = NO;
         [UIView commitAnimations];
     }
@@ -235,13 +236,13 @@
     }
 }
 
-- (BOOL)             webView: (UIWebView*) view
-  shouldStartLoadWithRequest: (NSURLRequest*) req
-              navigationType: (UIWebViewNavigationType) nav
+- (void)webView:(WKWebView *)webView decidePolicyForNavigationAction:(WKNavigationAction *)navigationAction decisionHandler:(void (^)(WKNavigationActionPolicy))decisionHandler
 {
-    NSURL *url = [req URL];
-    if([url isFileURL])
-        return(YES);
+    NSURL *url = [navigationAction.request URL];
+    if ([url isFileURL]) {
+        decisionHandler(WKNavigationActionPolicyAllow);
+        return;
+    }
 
     linkURL = url;
     
@@ -259,8 +260,10 @@
     UIAlertAction *cancel = [UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:nil];
     [alert addAction:cancel];
     [self presentViewController:alert animated:YES completion:nil];
-    return(NO);
+    decisionHandler(WKNavigationActionPolicyCancel);
 }
+
+#pragma mark -
 
 - (void) openURL:(NSURL*)url {
 #if 1
