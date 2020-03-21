@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		3A0EA51F2425E10D005B1EEF /* WebKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3A0EA51E2425E10C005B1EEF /* WebKit.framework */; };
 		3A8CCC0123EB50850062787A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 3A8CCC0023EB50850062787A /* Images.xcassets */; };
 		3A8CCC0623EB53EF0062787A /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3A8CCC0523EB53EF0062787A /* UIKit.framework */; };
 		3A8CCC2923EB6E910062787A /* ZBarSDK.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3A8CCC2323EB6E200062787A /* ZBarSDK.framework */; };
@@ -48,6 +49,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		3A0EA51E2425E10C005B1EEF /* WebKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WebKit.framework; path = System/Library/Frameworks/WebKit.framework; sourceTree = SDKROOT; };
 		3A8CCC0023EB50850062787A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = readertest/Images.xcassets; sourceTree = "<group>"; };
 		3A8CCC0523EB53EF0062787A /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
 		3A8CCC1E23EB6E200062787A /* ZBarSDK.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = ZBarSDK.xcodeproj; path = ../ZBarSDK.xcodeproj; sourceTree = "<group>"; };
@@ -64,6 +66,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				3A0EA51F2425E10D005B1EEF /* WebKit.framework in Frameworks */,
 				3A8CCC2923EB6E910062787A /* ZBarSDK.framework in Frameworks */,
 				3A8CCC0623EB53EF0062787A /* UIKit.framework in Frameworks */,
 			);
@@ -75,6 +78,7 @@
 		3A8CCC0223EB53B20062787A /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				3A0EA51E2425E10C005B1EEF /* WebKit.framework */,
 				3A8CCC0523EB53EF0062787A /* UIKit.framework */,
 			);
 			name = Frameworks;

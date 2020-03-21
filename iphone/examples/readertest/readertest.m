@@ -25,18 +25,18 @@ static NSString* const section_titles[] = {
     @"Decode Results",
 };
 
-static const CGRect const crop_choices[] = {
+static const CGRect crop_choices[] = {
     { { 0, 0 }, { 1, 1 } },
     { { .125, 0 }, { .75, 1 } },
     { { 0, .3 }, { 1, .4 } },
     { { 0, 0 }, { 0, 0 } }
 };
 
-static const NSInteger const density_choices[] = {
+static const NSInteger density_choices[] = {
     3, 2, 1, 0, 4, -1
 };
 
-static const CGFloat const zoom_choices[] = {
+static const CGFloat zoom_choices[] = {
     1, 10/9., 10/8., 8/6., 10/7., 9/6., 10/6., 7/4., 2, 0, -1
 };
 
@@ -82,7 +82,6 @@ static const CGFloat const zoom_choices[] = {
 
 - (void) initReader: (NSString*) clsName
 {
-    [reader release];
     Class cls = [[NSBundle mainBundle]
                     classNamed: clsName];
     assert(cls);
@@ -130,18 +129,18 @@ static const CGFloat const zoom_choices[] = {
 
     masks = [[NSArray alloc]
                 initWithObjects:
-                    [[[UIView alloc]
+                    [[UIView alloc]
                          initWithFrame: CGRectMake(0, -426, 320, 0)]
-                        autorelease],
-                    [[[UIView alloc]
+                        ,
+                    [[UIView alloc]
                          initWithFrame: CGRectMake(0, -426, 0, 426)]
-                        autorelease],
-                    [[[UIView alloc]
+                        ,
+                    [[UIView alloc]
                          initWithFrame: CGRectMake(0, 0, 320, 0)]
-                        autorelease],
-                    [[[UIView alloc]
+                        ,
+                    [[UIView alloc]
                          initWithFrame: CGRectMake(320, -426, 0, 426)]
-                        autorelease],
+                        ,
                 nil];
     for(UIView *mask in masks) {
         mask.backgroundColor = [UIColor colorWithWhite: 0
@@ -157,14 +156,13 @@ static const CGFloat const zoom_choices[] = {
     label.font = [UIFont boldSystemFontOfSize: 24];
     label.text = @"Custom Overlay";
     [overlay addSubview: label];
-    [label release];
 
     typeOvl = [[UILabel alloc]
                   initWithFrame: CGRectMake(0, -378, 80, 24)];
     typeOvl.backgroundColor = [UIColor clearColor];
     typeOvl.textColor = [UIColor whiteColor];
     typeOvl.font = [UIFont systemFontOfSize: 16];
-    typeOvl.textAlignment = UITextAlignmentCenter;
+    typeOvl.textAlignment = NSTextAlignmentCenter;
     [overlay addSubview: typeOvl];
 
     dataOvl = [[UILabel alloc]
@@ -181,7 +179,6 @@ static const CGFloat const zoom_choices[] = {
                                      green: 0
                                      blue: 0
                                      alpha: 1];
-    [manualBtn release];
     manualBtn = [[UIBarButtonItem alloc]
                     initWithBarButtonSystemItem: UIBarButtonSystemItemCamera
                     target: self
@@ -196,39 +193,38 @@ static const CGFloat const zoom_choices[] = {
 
     toolbar.items =
         [NSArray arrayWithObjects:
-            [[[UIBarButtonItem alloc]
+            [[UIBarButtonItem alloc]
                  initWithTitle: @"X"
                  style: UIBarButtonItemStylePlain
                  target: self
                  action: @selector(imagePickerControllerDidCancel:)]
-                autorelease],
-            [[[UIBarButtonItem alloc]
+                ,
+            [[UIBarButtonItem alloc]
                  initWithBarButtonSystemItem: UIBarButtonSystemItemFlexibleSpace
                  target: nil
                  action: nil]
-                autorelease],
+                ,
             manualBtn,
-            [[[UIBarButtonItem alloc]
+            [[UIBarButtonItem alloc]
                  initWithBarButtonSystemItem: UIBarButtonSystemItemFlexibleSpace
                  target: nil
                  action: nil]
-                autorelease],
-            [[[UIBarButtonItem alloc]
+                ,
+            [[UIBarButtonItem alloc]
                  initWithBarButtonSystemItem: UIBarButtonSystemItemPause
                  target: self
                  action: @selector(pause)]
-                autorelease],
-            [[[UIBarButtonItem alloc]
+                ,
+            [[UIBarButtonItem alloc]
                  initWithBarButtonSystemItem: UIBarButtonSystemItemFlexibleSpace
                  target: nil
                  action: nil]
-                autorelease],
-            [[[UIBarButtonItem alloc]
+                ,
+            [[UIBarButtonItem alloc]
                  initWithCustomView: info]
-                autorelease],
+                ,
             nil];
     [overlay addSubview: toolbar];
-    [toolbar release];
 }
 
 - (void) updateCropMask
@@ -287,7 +283,7 @@ static const CGFloat const zoom_choices[] = {
     nav.delegate = self;
 
     window = [[UIWindow alloc] initWithFrame: [[UIScreen mainScreen] bounds]];
-    [window addSubview: nav.view];
+    window.rootViewController = nav; // [window addSubview: nav.view];
     [window makeKeyAndVisible];
 
     [self initReader: @"ZBarReaderViewController"];
@@ -302,7 +298,7 @@ static const CGFloat const zoom_choices[] = {
     cell.tag = tag;
     [self setCheck: checked
           forCell: cell];
-    return([cell autorelease]);
+    return(cell);
 }
 
 - (void) initControlCells
@@ -391,38 +387,38 @@ static const CGFloat const zoom_choices[] = {
               withObject: configs];
 
     UITableViewCell *xDensityCell =
-        [[[UITableViewCell alloc]
+        [[UITableViewCell alloc]
              initWithStyle: UITableViewCellStyleValue1
              reuseIdentifier: nil]
-            autorelease];
+            ;
     xDensityCell.textLabel.text = @"CFG_X_DENSITY";
     xDensityCell.detailTextLabel.tag = ZBAR_CFG_X_DENSITY;
     xDensityCell.detailTextLabel.text =
-        [NSString stringWithFormat: @"%d", xDensity];
+    [NSString stringWithFormat: @"%ld", (long)xDensity];
 
     UITableViewCell *yDensityCell =
-        [[[UITableViewCell alloc]
+        [[UITableViewCell alloc]
              initWithStyle: UITableViewCellStyleValue1
              reuseIdentifier: nil]
-            autorelease];
+            ;
     yDensityCell.textLabel.text = @"CFG_Y_DENSITY";
     yDensityCell.detailTextLabel.tag = ZBAR_CFG_Y_DENSITY;
     yDensityCell.detailTextLabel.text =
-        [NSString stringWithFormat: @"%d", yDensity];
+    [NSString stringWithFormat: @"%ld", (long)yDensity];
 
     UITableViewCell *cropCell =
-        [[[UITableViewCell alloc]
+        [[UITableViewCell alloc]
              initWithStyle: UITableViewCellStyleValue1
              reuseIdentifier: nil]
-            autorelease];
+            ;
     cropCell.textLabel.text = @"scanCrop";
     cropCell.detailTextLabel.text = NSStringFromCGRect(reader.scanCrop);
 
     UITableViewCell *zoomCell =
-        [[[UITableViewCell alloc]
+        [[UITableViewCell alloc]
              initWithStyle: UITableViewCellStyleValue1
              reuseIdentifier: nil]
-            autorelease];
+            ;
     zoomCell.textLabel.text = @"zoom";
     zoomCell.detailTextLabel.text =
         [NSString stringWithFormat: @"%g", zoom];
@@ -448,7 +444,6 @@ static const CGFloat const zoom_choices[] = {
         0
     };
     NSMutableArray *symbols = [NSMutableArray array];
-    [symbolEnables release];
     symbolEnables = [NSMutableArray new];
     BOOL en = YES;
     for(int i = 0; allSymbologies[i]; i++) {
@@ -500,11 +495,11 @@ static const CGFloat const zoom_choices[] = {
               withObject: classes];
 
     UITableViewCell *typeCell = [UITableViewCell new];
-    typeLabel = [typeCell.textLabel retain];
+    typeLabel = typeCell.textLabel;
     UITableViewCell *dataCell = [UITableViewCell new];
-    dataLabel = [dataCell.textLabel retain];
+    dataLabel = dataCell.textLabel;
     dataLabel.numberOfLines = 0;
-    dataLabel.lineBreakMode = UILineBreakModeCharacterWrap;
+    dataLabel.lineBreakMode = NSLineBreakByCharWrapping;
     UITableViewCell *imageCell = [UITableViewCell new];
     imageView = [UIImageView new];
     imageView.contentMode = UIViewContentModeScaleAspectFit;
@@ -513,7 +508,6 @@ static const CGFloat const zoom_choices[] = {
     UIView *content = imageCell.contentView;
     imageView.frame = content.bounds;
     [content addSubview: imageView];
-    [imageView release];
     NSArray *results =
         [NSArray arrayWithObjects: typeCell, dataCell, imageCell, nil];
     [sections replaceObjectAtIndex: RESULT_SECTION
@@ -522,45 +516,11 @@ static const CGFloat const zoom_choices[] = {
     [self initControlCells];
 }
 
-- (void) viewDidUnload
-{
-    [sections release];
-    sections = nil;
-    [symbolEnables release];
-    symbolEnables = nil;
-    [manualBtn release];
-    manualBtn = nil;
-    [typeLabel release];
-    typeLabel = nil;
-    [dataLabel release];
-    dataLabel = nil;
-    [imageView release];
-    imageView = nil;
-    [typeOvl release];
-    typeOvl = nil;
-    [dataOvl release];
-    dataOvl = nil;
-    [overlay release];
-    overlay = nil;
-    [masks release];
-    masks = nil;
-    [super viewDidUnload];
-}
-
 - (void) dealloc
 {
-    [reader release];
     reader = nil;
-    [nav release];
     nav = nil;
-    [window release];
     window = nil;
-    [super dealloc];
-}
-
-- (BOOL) shouldAutorotateToInterfaceOrientation: (UIInterfaceOrientation) orient
-{
-    return(YES);
 }
 
 - (void) scan
@@ -585,8 +545,7 @@ static const CGFloat const zoom_choices[] = {
     manualBtn.enabled = TARGET_IPHONE_SIMULATOR ||
         (reader.cameraMode == ZBarReaderControllerCameraModeDefault) ||
         [reader isKindOfClass: [ZBarReaderViewController class]];
-    [self presentModalViewController: reader
-          animated: YES];
+    [self presentViewController:reader animated:YES completion:nil];
 }
 
 - (void) help
@@ -594,9 +553,8 @@ static const CGFloat const zoom_choices[] = {
     ZBarHelpController *help =
         [[ZBarHelpController alloc]
             initWithReason: @"TEST"];
-    [self presentModalViewController: help
-          animated: YES];
-    [help release];
+    [self presentViewController: help
+          animated: YES completion:nil];
 }
 
 - (void) info
@@ -627,19 +585,19 @@ static const CGFloat const zoom_choices[] = {
                      animated: (BOOL) animated
 {
     self.navigationItem.leftBarButtonItem =
-        [[[UIBarButtonItem alloc]
+        [[UIBarButtonItem alloc]
              initWithTitle: @"Help"
              style: UIBarButtonItemStyleDone
              target: self
              action: @selector(help)]
-            autorelease];
+            ;
     self.navigationItem.rightBarButtonItem =
-        [[[UIBarButtonItem alloc]
+        [[UIBarButtonItem alloc]
              initWithTitle: @"Scan!"
              style: UIBarButtonItemStyleDone
              target: self
              action: @selector(scan)]
-            autorelease];
+            ;
 }
 
 // UITableViewDataSource
@@ -691,7 +649,6 @@ static const CGFloat const zoom_choices[] = {
             cancelButtonTitle: @"Cancel"
             otherButtonTitles: nil];
     [alert show];
-    [alert release];
 }
 
 - (void) advanceCrop: (UILabel*) label
@@ -853,13 +810,12 @@ static const CGFloat const zoom_choices[] = {
     }
     case RESULT_SECTION:
         if(path.row == 2)
-            [[[[UIActionSheet alloc]
+            [[[UIActionSheet alloc]
                   initWithTitle: nil
                   delegate: self
                   cancelButtonTitle: @"Cancel"
                   destructiveButtonTitle: nil
                   otherButtonTitles: @"Save Image", nil]
-                 autorelease]
                 showInView: self.view];
         break;
     default:
@@ -926,7 +882,7 @@ static const CGFloat const zoom_choices[] = {
           withObject: bestResult
           afterDelay: .001];
     if(!continuous)
-        [picker dismissModalViewControllerAnimated: YES];
+        [picker dismissViewControllerAnimated: YES completion:nil];
 }
 
 - (void) presentResult: (ZBarSymbol*) sym
@@ -967,7 +923,7 @@ static const CGFloat const zoom_choices[] = {
 - (void) imagePickerControllerDidCancel: (UIImagePickerController*) picker
 {
     NSLog(@"imagePickerControllerDidCancel:\n");
-    [reader dismissModalViewControllerAnimated: YES];
+    [reader dismissViewControllerAnimated: YES completion:nil];
 }
 
 - (void) readerControllerDidFailToRead: (ZBarReaderController*) _reader
@@ -976,7 +932,7 @@ static const CGFloat const zoom_choices[] = {
     NSLog(@"readerControllerDidFailToRead: retry=%s\n",
           (retry) ? "YES" : "NO");
     if(!retry)
-        [_reader dismissModalViewControllerAnimated: YES];
+        [_reader dismissViewControllerAnimated: YES completion:nil];
 }
 
 @end
@@ -984,8 +940,7 @@ static const CGFloat const zoom_choices[] = {
 
 int main (int argc, char *argv[])
 {
-    NSAutoreleasePool *pool = [NSAutoreleasePool new];
-    int rc = UIApplicationMain(argc, argv, nil, @"AppDelegate");
-    [pool release];
-    return(rc);
+    @autoreleasepool {
+        return UIApplicationMain(argc, argv, nil, NSStringFromClass([AppDelegate class]));
+    }
 }
